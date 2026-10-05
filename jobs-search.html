@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Search</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0d1117;color:#e6edf3;font-size:13px}
+:root{--blue:#2f81f7;--green:#3fb950;--red:#f78166;--yellow:#e3b341;--b:#30363d;--s1:#161b22;--s2:#1c2330;--t2:#8b949e;--t3:#6e7681}
+.search-bar{background:var(--s1);border-bottom:1px solid var(--b);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;position:sticky;top:0;z-index:10}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:10px;color:var(--t2);font-weight:500}
+input,select{background:#0d1117;border:1px solid var(--b);border-radius:5px;color:#e6edf3;padding:6px 9px;font-size:12px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:var(--blue)}
+.btn{padding:6px 14px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:opacity .12s}
+.btn:hover{opacity:.82}.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:var(--s2);color:#e6edf3;border:1px solid var(--b)}
+.content{padding:12px}
+.stats{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.stat{background:var(--s1);border:1px solid var(--b);border-radius:6px;padding:8px 12px;flex:1;min-width:80px}
+.stat-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.stat-v{font-size:18px;font-weight:700;margin-top:2px;font-family:'JetBrains Mono',monospace}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.job-card{background:var(--s1);border:1px solid var(--b);border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:7px;transition:border-color .15s}
+.job-card:hover{border-color:var(--blue)}
+.ring{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid;flex-shrink:0;font-family:monospace}
+.rg{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.08)}
+.ry{border-color:var(--yellow);color:var(--yellow);background:rgba(227,179,65,.08)}
+.rr{border-color:var(--red);color:var(--red);background:rgba(247,129,102,.08)}
+.tag{display:inline-flex;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:500;font-family:monospace}
+.tg{background:rgba(63,185,80,.15);color:var(--green)}
+.tb{background:rgba(47,129,247,.15);color:var(--blue)}
+.tw{display:flex;flex-wrap:wrap;gap:4px}
+.spin{width:14px;height:14px;border:2px solid var(--b);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar{height:3px;background:var(--b);border-radius:2px;overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .4s}
+.empty{text-align:center;padding:40px 20px;color:var(--t3)}
+.filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<!-- Search Bar -->
+<div class="search-bar">
+  <div class="fg" style="flex:2;min-width:150px">
+    <label class="fl">Job Title</label>
+    <input type="text" id="q" value="Site Reliability Engineer" placeholder="SRE, DevOps, Platform...">
+  </div>
+  <div class="fg" style="flex:1;min-width:110px">
+    <label class="fl">Location</label>
+    <input type="text" id="loc" value="United States">
+  </div>
+  <div class="fg">
+    <label class="fl">Type</label>
+    <select id="type">
+      <option value="FULLTIME">Full Time</option>
+      <option value="CONTRACTOR">Contract</option>
+      <option value="">Any</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label class="fl">Remote</label>
+    <select id="remote">
+      <option value="">Any</option>
+      <option value="true">Remote</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label class="fl">Posted</label>
+    <select id="posted">
+      <option value="today">Today</option>
+      <option value="3days">3 Days</option>
+      <option value="week" selected>This Week</option>
+      <option value="month">Month</option>
+    </select>
+  </div>
+  <button class="btn btn-blue" id="search-btn" onclick="search()" style="align-self:flex-end">⟳ Search</button>
+</div>
+
+<!-- Quick roles -->
+<div style="padding:8px 14px;background:var(--s1);border-bottom:1px solid var(--b);display:flex;gap:6px;flex-wrap:wrap">
+  <span style="font-size:10px;color:var(--t3);align-self:center">Quick:</span>
+  <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px" onclick="quick('Site Reliability Engineer')">SRE</button>
+  <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px" onclick="quick('Platform Engineer')">Platform Eng</button>
+  <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px" onclick="quick('DevOps Engineer')">DevOps</button>
+  <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px" onclick="quick('Cloud Engineer')">Cloud Eng</button>
+  <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px" onclick="quick('Infrastructure Engineer')">Infrastructure</button>
+</div>
+
+<div class="content">
+  <!-- Progress -->
+  <div id="progress" style="display:none;margin-bottom:10px;background:var(--s1);border:1px solid var(--b);border-radius:6px;padding:10px 14px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+      <span id="prog-label" style="color:var(--t2)">Searching...</span>
+      <span id="prog-pct" style="color:var(--blue)">0%</span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><div class="stat-l">Found</div><div class="stat-v" id="st-total">0</div></div>
+    <div class="stat"><div class="stat-l">Strong 75%+</div><div class="stat-v" id="st-strong" style="color:var(--green)">0</div></div>
+    <div class="stat"><div class="stat-l">Remote</div><div class="stat-v" id="st-remote" style="color:var(--blue)">0</div></div>
+    <div class="stat"><div class="stat-l">Avg Score</div><div class="stat-v" id="st-avg" style="color:var(--yellow)">—</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters" id="filter-bar" style="display:none">
+    <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="filter('all')">All</button>
+    <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="filter('strong')">75%+ Match</button>
+    <button class="btn btn-ghost" style="font-size:10px;padding:3px 9px" onclick="filter('remote')">Remote Only</button>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="empty">
+      <div style="font-size:28px;margin-bottom:8px">⚡</div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:4px">Real SRE jobs from LinkedIn & Indeed</div>
+      <div style="font-size:11px;line-height:1.7">Click Search to find real jobs<br>scored against your skills</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SKILLS = ["AWS","EKS","Kubernetes","Terraform","Helm","Istio","Datadog","OpenTelemetry","Prometheus","Grafana","ArgoCD","GitOps","GitHub Actions","Jenkins","PCI-DSS","FinOps","Docker","Linux","Python","Bash","HashiCorp Vault","Redis","Kafka","Ansible","SLO","SLI","CKA","GCP","GKE","Wiz","Fortify","Loki","Fluent Bit","StackStorm","Envoy","NGINX"];
+const PROXY = '/.netlify/functions/jobs';
+let allJobs = [];
+
+function quick(title) {
+  document.getElementById('q').value = title;
+  search();
+}
+
+function setP(pct, label) {
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-pct').textContent = pct+'%';
+  if (label) document.getElementById('prog-label').textContent = label;
+}
+
+function score(desc, title) {
+  const text = ((desc||'')+(title||'')).toLowerCase();
+  let s = 40;
+  SKILLS.forEach(sk => { if (text.includes(sk.toLowerCase())) s += 4; });
+  ['site reliability','platform engineer','sre','devops','infrastructure'].forEach(t => { if (text.includes(t)) s += 3; });
+  ['senior','staff','principal','lead'].forEach(t => { if (text.includes(t)) s += 2; });
+  ['junior','entry level','intern'].forEach(t => { if (text.includes(t)) s -= 15; });
+  return Math.min(99, Math.max(10, s));
+}
+
+function matched(desc) {
+  const d = (desc||'').toLowerCase();
+  return SKILLS.filter(s => d.includes(s.toLowerCase())).slice(0,6);
+}
+
+function safe(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function search() {
+  const query  = document.getElementById('q').value.trim() || 'Site Reliability Engineer';
+  const loc    = document.getElementById('loc').value.trim() || 'United States';
+  const type   = document.getElementById('type').value;
+  const remote = document.getElementById('remote').value;
+  const posted = document.getElementById('posted').value;
+
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true; btn.textContent = '⟳ Searching...';
+  document.getElementById('progress').style.display = '';
+  document.getElementById('stats').style.display = 'none';
+  document.getElementById('filter-bar').style.display = 'none';
+  document.getElementById('results').innerHTML = '<div class="empty"><div class="spin"></div><div style="margin-top:8px;font-size:11px">Fetching real jobs from LinkedIn & Indeed...</div></div>';
+  setP(20, 'Calling JSearch API...');
+
+  try {
+    const params = new URLSearchParams({ query: `${query} ${loc}`, page: '1', num_pages: '2', date_posted: posted });
+    if (type) params.set('employment_types', type);
+    if (remote === 'true') params.set('remote_jobs_only', 'true');
+
+    setP(40, 'Fetching jobs...');
+    const res = await fetch(`${PROXY}?${params}`);
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const data = await res.json();
+    const jobs = data.data || [];
+
+    setP(80, 'Scoring against your skills...');
+
+    allJobs = jobs.map(j => ({
+      title:    j.job_title || '',
+      company:  j.employer_name || '',
+      location: j.job_location || (j.job_is_remote ? 'Remote' : 'US'),
+      remote:   j.job_is_remote || false,
+      url:      j.job_apply_link || j.job_google_link || '',
+      desc:     (j.job_description||'').slice(0,1500),
+      salary:   j.job_salary_string || null,
+      score:    score(j.job_description, j.job_title),
+      matched:  matched(j.job_description),
+      posted:   j.job_posted_at || 'Recent',
+      source:   j.job_publisher || 'LinkedIn',
+    })).sort((a,b) => b.score - a.score);
+
+    setP(100, `Found ${allJobs.length} real jobs!`);
+    setTimeout(() => { document.getElementById('progress').style.display='none'; }, 800);
+
+    const strong = allJobs.filter(j=>j.score>=75).length;
+    const rem    = allJobs.filter(j=>j.remote).length;
+    const avg    = allJobs.length ? Math.round(allJobs.reduce((s,j)=>s+j.score,0)/allJobs.length) : 0;
+    document.getElementById('st-total').textContent  = allJobs.length;
+    document.getElementById('st-strong').textContent = strong;
+    document.getElementById('st-remote').textContent = rem;
+    document.getElementById('st-avg').textContent    = avg+'%';
+    document.getElementById('stats').style.display   = 'flex';
+    document.getElementById('filter-bar').style.display = 'flex';
+
+    render(allJobs);
+
+  } catch(e) {
+    document.getElementById('results').innerHTML = `<div class="empty"><div style="color:var(--red)">❌ ${e.message}</div></div>`;
+    document.getElementById('progress').style.display = 'none';
+  }
+  btn.disabled = false; btn.textContent = '⟳ Search';
+}
+
+function filter(f) {
+  const list = f==='strong' ? allJobs.filter(j=>j.score>=75)
+             : f==='remote' ? allJobs.filter(j=>j.remote)
+             : allJobs;
+  render(list);
+}
+
+function render(jobs) {
+  if (!jobs.length) {
+    document.getElementById('results').innerHTML = '<div class="empty">No jobs match this filter</div>';
+    return;
+  }
+  document.getElementById('results').innerHTML = `
+    <div style="font-size:11px;color:var(--t2);margin-bottom:8px">${jobs.length} jobs · sorted by match score</div>
+    <div class="jobs">${jobs.map((j,i) => card(j,i)).join('')}</div>`;
+}
+
+function card(j, i) {
+  const rc = j.score>=75?'rg':j.score>=50?'ry':'rr';
+  return `<div class="job-card">
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div class="ring ${rc}">${j.score}%</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;line-height:1.3">${safe(j.title)}</div>
+        <div style="font-size:11px;color:var(--blue);font-weight:500">${safe(j.company)}</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--t3);display:flex;gap:8px;flex-wrap:wrap">
+      <span>📍 ${safe(j.location)}</span>
+      <span>📅 ${safe(j.posted)}</span>
+      ${j.salary ? `<span style="color:var(--green);font-weight:600">💰 ${safe(j.salary)}</span>` : ''}
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">
+      ${j.remote ? '<span class="tag tg">Remote</span>' : ''}
+      <span class="tag tb">${safe(j.source)}</span>
+    </div>
+    <div style="font-size:10px;color:var(--t2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${safe(j.desc)}</div>
+    <div class="tw">${j.matched.map(s=>`<span class="tag tg">${safe(s)}</span>`).join('')}</div>
+    <div style="display:flex;gap:6px">
+      <a href="${safe(j.url)}" target="_blank" class="btn btn-ghost" style="font-size:10px;text-decoration:none;flex:1;justify-content:center;padding:5px">View Job →</a>
+      <button class="btn btn-blue" style="font-size:10px;flex:1;padding:5px" onclick="applyJob(${i})">⚡ Tailor + Apply</button>
+    </div>
+  </div>`;
+}
+
+function applyJob(i) {
+  const j = allJobs[i];
+  if (!j) return;
+  // Send job to parent CareerPilot app
+  window.parent.postMessage({
+    type: 'CAREERPILOT_JOB',
+    job: { url: j.url, company: j.company, title: j.title, jd: j.desc }
+  }, '*');
+}
+
+// Auto search on load
+window.addEventListener('load', () => search());
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=owner-private" data-nf-variant="owner-private" data-netlify-site-id="bc711117-075c-4634-813a-06afe959ca08" data-app-host="app.netlify.com"></script>
